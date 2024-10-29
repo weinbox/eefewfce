@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام متابعة الطلبات</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: right;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        button {
+            background-color: #6c63ff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #5a54d4;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #6c63ff;
+            color: white;
+        }
+        .search-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .btn-delete {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-delete:hover {
+            background-color: #c9302c;
+        }
+        .btn-print {
+            background-color: #007bff;
+            color: white;
+            margin-top: 10px;
+        }
+        .links-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .links-container a {
+            display: inline-block;
+            margin: 10px;
+        }
+        .late-order {
+            background-color: #f8d7da;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 200px;
+            z-index: 1055;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .stats-container {
+            margin-top: 40px;
+        }
+        .chart-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        @media (max-width: 768px) {
+            .form-container, .chart-container {
+                width: 90%;
+            }
+            input, select, button {
+                font-size: 14px;
+            }
+            th, td {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>نموذج متابعة الطلبات</h2>
+        <form id="orderTrackingForm" onsubmit="trackOrder(); return false;">
+            <label for="customerName">اسم العميل:</label>
+            <input type="text" id="customerName" name="customerName" placeholder="ادخل اسم العميل" required>
+
+            <label for="address">العنوان:</label>
+            <input type="text" id="address" name="address" placeholder="ادخل العنوان" required>
+
+            <label for="phoneNumber">رقم الهاتف:</label>
+            <input type="text" id="phoneNumber" name="phoneNumber" placeholder="ادخل رقم الهاتف" required>
+
+            <label for="accountLink">رابط حساب العميل:</label>
+            <input type="url" id="accountLink" name="accountLink" placeholder="أدخل رابط حساب العميل" required>
+
+            <label for="productLink">رابط المنتج المطلوب:</label>
+            <input type="url" id="productLink" name="productLink" placeholder="أدخل رابط المنتج المطلوب" required>
+
+            <label for="itemCount">عدد القطع:</label>
+            <input type="number" id="itemCount" name="itemCount" placeholder="ادخل عدد القطع" required>
+
+            <label for="orderNumber">رقم الطلب:</label>
+            <input type="text" id="orderNumber" name="orderNumber" placeholder="ادخل رقم الطلب" required>
+
+            <label for="orderStatus">حالة الطلب:</label>
+            <select id="orderStatus" name="orderStatus" required>
+                <option value="تم الاستلام">تم الاستلام</option>
+                <option value="جاري المعالجة">جاري المعالجة</option>
+                <option value="تم الشحن">تم الشحن</option>
+                <option value="تم التسليم">تم التسليم</option>
+            </select>
+
+            <label for="paymentStatus">حالة الدفع:</label>
+            <select id="paymentStatus" name="paymentStatus" required>
+                <option value="مدفوع">مدفوع</option>
+                <option value="غير مدفوع">غير مدفوع</option>
+            </select>
+
+            <label for="price">السعر:</label>
+            <input type="number" id="price" name="price" placeholder="ادخل السعر" step="0.01" required>
+
+            <label for="orderDate">تاريخ الطلب:</label>
+            <input type="date" id="orderDate" name="orderDate" required>
+
+            <label for="notes">ملاحظات إضافية:</label>
+            <input type="text" id="notes" name="notes" placeholder="ادخل أي ملاحظات إضافية">
+
+            <button type="submit">احفظ الطلب</button>
+        </form>
+
+        <p id="result"></p>
+
+        <div class="search-container">
+            <label for="searchOrder">بحث عن الطلبات:</label>
+            <input type="text" id="searchOrder" placeholder="ابحث بواسطة رقم الطلب أو اسم العميل أو التاريخ" onkeyup="searchOrders()">
+            <label for="filterStatus">تصفية حسب الحالة:</label>
+            <select id="filterStatus" onchange="filterOrders()">
+                <option value="all">جميع الحالات</option>
+                <option value="تم الاستلام">تم الاستلام</option>
+                <option value="جاري المعالجة">جاري المعالجة</option>
+                <option value="تم الشحن">تم الشحن</option>
+                <option value="تم التسليم">تم التسليم</option>
+            </select>
+        </div>
+
+        <table id="ordersTable">
+            <thead>
+                <tr>
+                    <th>اسم العميل</th>
+                    <th>العنوان</th>
+                    <th>رقم الهاتف</th>
+                    <th>رابط حساب العميل</th>
+                    <th>رابط المنتج</th>
+                    <th>عدد القطع</th>
+                    <th>رقم الطلب</th>
+                    <th>حالة الطلب</th>
+                    <th>حالة الدفع</th>
+                    <th>السعر</th>
+                    <th>تاريخ الطلب</th>
+                    <th>ملاحظات إضافية</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- سيتم إضافة الطلبات هنا -->
+            </tbody>
+        </table>
+    </div>
+
+    <button onclick="exportToCSV()" class="btn btn-primary mt-3">تصدير إلى CSV</button>
+    <button onclick="printOrders()" class="btn btn-print">طباعة الطلبات</button>
+
+    <div id="toast" class="toast bg-success text-white p-3">تم حفظ الطلب بنجاح</div>
+
+    <div class="stats-container">
+        <h3>إحصاءات الطلبات</h3>
+        <div class="chart-container">
+            <canvas id="orderStatusChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        function trackOrder() {
+            const formData = new FormData(document.getElementById("orderTrackingForm"));
+
+            fetch("https://script.google.com/macros/s/AKfycbyQbCgut7BHXJgFW5zVKiDE9SniYFvDUeHbW87ZmcVbLhU8iwupDfkObkVlOcBg2sb0JQ/exec", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result === "Success") {
+                    alert("تم حفظ الطلب بنجاح");
+                    // احفظ البيانات في LocalStorage أيضًا لعرضها في الجدول
+                    saveOrdersToLocalStorage();
+                } else {
+                    alert("حدث خطأ أثناء حفظ الطلب.");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("حدث خطأ أثناء حفظ الطلب.");
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadOrdersFromLocalStorage);
+    </script>
+</body>
+</html>
