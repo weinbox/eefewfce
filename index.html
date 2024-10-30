@@ -219,26 +219,21 @@
     <script>
         function trackOrder() {
             const formData = new FormData(document.getElementById("orderTrackingForm"));
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
 
             fetch("https://script.google.com/macros/s/AKfycbyQbCgut7BHXJgFW5zVKiDE9SniYFvDUeHbW87ZmcVbLhU8iwupDfkObkVlOcBg2sb0JQ/exec", {
                 method: "POST",
-                body: formData
-            })
-            .then(response => response.text())
-            .then(result => {
-                if (result === "Success") {
-                    alert("تم حفظ الطلب بنجاح");
-                    // احفظ البيانات في LocalStorage أيضًا لعرضها في الجدول
-                    saveOrdersToLocalStorage();
-                } else {
-                    alert("حدث خطأ أثناء حفظ الطلب.");
+                body: JSON.stringify(data),
+                headers: {
+                    "Content-Type": "application/json"
                 }
             })
-            .catch(error => {
-                console.error("Error:", error);
-                alert("حدث خطأ أثناء حفظ الطلب.");
-            });
-        }
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === "Success") 
 
         document.addEventListener('DOMContentLoaded', loadOrdersFromLocalStorage);
     </script>
